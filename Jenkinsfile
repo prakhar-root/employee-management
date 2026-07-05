@@ -6,20 +6,19 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                echo 'Checking out source code...'
+                checkout scm
             }
         }
 
-        stage('Build') {
+        stage('Build Docker Image') {
             steps {
-                sh 'pwd'
-                sh 'ls -la'
+                sh 'docker build -t employee-management:v1 .'
             }
         }
 
-        stage('Docker Version') {
+        stage('Verify Docker Image') {
             steps {
-                sh 'docker --version'
+                sh 'docker images | grep employee-management'
             }
         }
 
