@@ -2,6 +2,11 @@ pipeline {
 
     agent any
 
+    environment {
+        IMAGE_NAME = "prakhar1602/employee-management"
+        IMAGE_TAG = "${BUILD_NUMBER}"
+    }
+
     stages {
 
         stage('Checkout') {
@@ -12,15 +17,42 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t employee-management:v1 .'
+                sh '''
+                docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
+                '''
             }
         }
 
-        stage('Verify Docker Image') {
+        stage('Docker Login') {
             steps {
-                sh 'docker images | grep employee-management'
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+
+                    sh '''
+                    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                    '''
+                }
             }
         }
 
+        stage('Push Image') {
+            steps {
+                sh '''
+                docker push ${IMAGE_NAME}:${IMAGE_TAG}
+                docker push ${IMAGE_NAME}:latest
+                '''
+            }
+        }
+
+    }
+
+    post {
+        always {
+            sh 'docker logout'
+        }
     }
 }
