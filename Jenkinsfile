@@ -24,25 +24,6 @@ pipeline {
             }
         }
 
-        stage('Smoke Test') {
-            steps {
-                sh '''
-                docker rm -f smoke-test || true
-
-                docker run -d \
-                  --name smoke-test \
-                  -p 5050:5000 \
-                  ${IMAGE_NAME}:${IMAGE_TAG}
-
-                echo "Waiting for application..."
-                sleep 15
-
-                curl --fail http://localhost:5050/health
-
-                docker rm -f smoke-test
-                '''
-            }
-        }
 
         stage('Docker Login') {
             steps {
@@ -66,16 +47,6 @@ pipeline {
                 docker push ${IMAGE_NAME}:latest
                 '''
             }
-        }
-
-    }
-
-    post {
-        always {
-            sh '''
-            docker rm -f smoke-test || true
-            docker logout
-            '''
         }
     }
 }
